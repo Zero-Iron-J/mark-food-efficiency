@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>채집 효율 시뮬레이터</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font Awesome -->
+  <link
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    rel="stylesheet"
+  />
+
+  <!-- Google AdSense 전역 스크립트 (본인 publisher ID로 변경) -->
+  <script async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-xxxxxxxxxxxxxxxx"
+          crossorigin="anonymous"></script>
+
+  <!-- 폰트 & 커스텀 스타일 -->
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap");
+
+    body {
+      font-family: "Noto Sans KR", sans-serif;
+      background-color: #ecfdf5; /* 연한 초록 배경 */
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    /* 간단한 페이드업 애니메이션 */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-fade-in-up {
+      animation: fadeInUp 0.25s ease-out;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex justify-center items-stretch p-4">
+
+  <!-- 전체 레이아웃: 좌측 광고 - 메인 - 우측 광고 -->
+  <div class="w-full max-w-7xl mx-auto flex gap-4">
+
+    <!-- 좌측 배너 광고 (PC에서만) -->
+    <aside class="hidden lg:block w-52">
+      <div class="sticky top-4 space-y-4">
+        <!-- AD: LEFT TOP BANNER -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-200 p-2 h-64 flex items-center justify-center">
+          <ins class="adsbygoogle"
+               style="display:block"
+               data-ad-client="ca-pub-xxxxxxxxxxxxxxxx"
+               data-ad-slot="YOUR_SLOT_ID_1"
+               data-ad-format="auto"
+               data-full-width-responsive="true"></ins>
+          <script>
+            (adsbygoogle = window.adsbygoogle || []).push({});
+          </script>
+        </div>
+        <!-- AD: LEFT MIDDLE BANNER -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-200 p-2 h-64 flex items-center justify-center">
+          <ins class="adsbygoogle"
+               style="display:block"
+               data-ad-client="ca-pub-xxxxxxxxxxxxxxxx"
+               data-ad-slot="YOUR_SLOT_ID_2"
+               data-ad-format="auto"
+               data-full-width-responsive="true"></ins>
+          <script>
+            (adsbygoogle = window.adsbygoogle || []).push({});
+          </script>
+        </div>
+        <!-- AD: LEFT BOTTOM BANNER -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-200 p-2 h-64 flex items-center justify-center">
+          <ins class="adsbygoogle"
+               style="display:block"
+               data-ad-client="ca-pub-xxxxxxxxxxxxxxxx"
+               data-ad-slot="YOUR_SLOT_ID_3"
+               data-ad-format="auto"
+               data-full-width-responsive="true"></ins>
+          <script>
+            (adsbygoogle = window.adsbygoogle || []).push({});
+          </script>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 메인 콘텐츠 영역 -->
+    <main class="flex-1 flex flex-col items-center justify-start pb-24">
+
+      <!-- AD: MAIN TOP BANNER (메인 카드 위 가로 배너) -->
+      <div class="w-full max-w-3xl mb-4">
+        <div class="bg-white rounded-xl shadow-md border border-gray-200 p-3 h-24 flex items-center justify-center">
+          <ins class="adsbygoogle"
+               style="display:block"
+               data-ad-client="ca-pub-xxxxxxxxxxxxxxxx"
+               data-ad-slot="YOUR_SLOT_ID_4"
+               data-ad-format="auto"
+               data-full-width-responsive="true"></ins>
+          <script>
+            (adsbygoogle = window.adsbygoogle || []).push({});
+          </script>
+        </div>
+      </div>
+
+      <!-- 메인 카드 -->
+      <div
+        class="max-w-3xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden border border-green-100"
+      >
+        <!-- 헤더 -->
+        <div class="bg-green-600 p-8 text-center relative overflow-hidden">
+          <div class="absolute inset-0 opacity-20 text-white"></div>
+          <i
+            class="fas fa-seedling text-white text-6xl absolute -bottom-4 -right-4 opacity-30 transform rotate-12"
+          ></i>
+          <h1
+            class="text-3xl font-bold text-white relative z-10 flex items-center justify-center gap-2"
+          >
+            <i class="fas fa-chart-bar"></i> 채집 효율 계산기
+          </h1>
+          <p class="text-green-100 mt-2 relative z-10 opacity-90">
+            스펙을 입력하면 효율 1, 2등을 분석합니다
+          </p>
+        </div>
+
+        <!-- 입력 섹션 -->
+        <div class="p-6 md:p-8 space-y-8">
+          <!-- 메인 스펙 (H1, K1) -->
+          <div
+            class="bg-green-50 rounded-2xl p-6 border border-green-200 relative"
+          >
+            <div
+              class="absolute -top-3 left-4 bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full"
+            >
+              MAIN STATS
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
+              <div class="mb-4">
+                <label class="block text-sm font-bold text-green-800 mb-1">
+                  <i class="fas fa-gavel text-yellow-600 mr-1"></i> 괭이 강화
+                </label>
+                <select
+                  id="K1"
+                  class="w-full px-4 py-2 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors bg-white text-gray-700 cursor-pointer"
+                >
+                  <!-- JS로 생성됨 -->
+                </select>
+              </div>
+              <div class="mb-4">
+                <label class="block text-sm font-bold text-green-800 mb-1">
+                  <i class="fas fa-heartbeat text-red-500 mr-1"></i> 스테미너
+                </label>
+                <input
+                  type="number"
+                  id="H1"
+                  class="w-full px-4 py-2 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors bg-white text-gray-700"
+                  placeholder="3000 이상"
+                  min="3000"
+                  value="3000"
+                />
+                <p
+                  id="staminaError"
+                  class="text-red-500 text-xs mt-1 hidden font-bold"
+                >
+                  <i class="fas fa-exclamation-circle"></i> 3000 이상 입력해주세요.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 추가 효과 (B21 ~ B26) -->
+          <div
+            class="bg-white rounded-2xl p-6 border-2 border-gray-100 relative shadow-sm"
+          >
+            <div
+              class="absolute -top-3 left-4 bg-gray-500 text-white text-xs font-bold px-3 py-1 rounded-full"
+            >
+              BONUS STATS
+            </div>
+            <div
+              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2"
+            >
+              <div>
+                <label class="block text-sm font-bold text-green-800 mb-1"
+                  >🌿 자연이 주는 선물</label
+                >
+                <input
+                  type="number"
+                  id="B21"
+                  class="w-full px-4 py-2 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors bg-white text-gray-700"
+                  placeholder="0"
+                  step="0.01"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-green-800 mb-1"
+                  >🔥 불 붙은 괭이</label
+                >
+                <input
+                  type="number"
+                  id="B22"
+                  class="w-full px-4 py-2 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors bg-white text-gray-700"
+                  placeholder="0"
+                  step="0.01"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-green-800 mb-1"
+                  >🌾 오늘도 풍년이다</label
+                >
+                <input
+                  type="number"
+                  id="B24"
+                  class="w-full px-4 py-2 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors bg-white text-gray-700"
+                  placeholder="0"
+                  step="0.01"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-green-800 mb-1"
+                  >👑 왕 크니까 왕좋아</label
+                >
+                <input
+                  type="number"
+                  id="B25"
+                  class="w-full px-4 py-2 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors bg-white text-gray-700"
+                  placeholder="0"
+                  step="0.01"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-green-800 mb-1"
+                  >🌱 씨앗은 덤이야</label
+                >
+                <input
+                  type="number"
+                  id="B26"
+                  class="w-full px-4 py-2 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors bg-white text-gray-700"
+                  placeholder="0"
+                  step="0.01"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- AD: FORM BOTTOM BANNER (버튼 위 중간 배너) -->
+          <div class="w-full">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 h-24 flex items-center justify-center mb-2">
+              <ins class="adsbygoogle"
+                   style="display:block"
+                   data-ad-client="ca-pub-xxxxxxxxxxxxxxxx"
+                   data-ad-slot="YOUR_SLOT_ID_5"
+                   data-ad-format="auto"
+                   data-full-width-responsive="true"></ins>
+              <script>
+                (adsbygoogle = window.adsbygoogle || []).push({});
+              </script>
+            </div>
+          </div>
+
+          <button
+            id="calculateBtn"
+            onclick="calculate()"
+            class="w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-bold py-4 rounded-xl shadow-lg transform transition hover:-translate-y-1 active:scale-95 text-lg flex items-center justify-center gap-2"
+          >
+            <i class="fas fa-calculator"></i>
+            <span id="calculateBtnText">효율 계산 및 순위 확인</span>
+          </button>
+        </div>
+
+        <!-- 결과 화면 -->
+        <div
+          id="resultArea"
+          class="hidden bg-gray-50 border-t border-gray-200 p-6 md:p-8 animate-fade-in-up"
+        >
+          <!-- Top 2 카드 -->
+          <div class="grid grid-cols-2 gap-4 mb-8">
+            <!-- 1등 -->
+            <div
+              class="bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 p-5 rounded-2xl shadow-md text-center relative overflow-hidden"
+            >
+              <div
+                class="absolute top-0 right-0 bg-yellow-400 text-white text-xs font-bold px-2 py-1 rounded-bl-lg"
+              >
+                1st
+              </div>
+              <i
+                class="fas fa-crown text-yellow-500 text-3xl mb-2 drop-shadow-sm"
+              ></i>
+              <div
+                id="rank1Label"
+                class="text-gray-800 font-bold text-lg mb-1 truncate"
+              >
+                -
+              </div>
+              <div
+                id="rank1Value"
+                class="text-2xl font-extrabold text-green-700 font-mono"
+              >
+                0
+              </div>
+              <div class="text-xs text-gray-500 mt-2 font-medium">
+                최고 효율
+              </div>
+            </div>
+            <!-- 2등 -->
+            <div
+              class="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 p-5 rounded-2xl shadow-md text-center relative overflow-hidden"
+            >
+              <div
+                class="absolute top-0 right-0 bg-gray-400 text-white text-xs font-bold px-2 py-1 rounded-bl-lg"
+              >
+                2nd
+              </div>
+              <i
+                class="fas fa-medal text-gray-400 text-3xl mb-2 drop-shadow-sm"
+              ></i>
+              <div
+                id="rank2Label"
+                class="text-gray-800 font-bold text-lg mb-1 truncate"
+              >
+                -
+              </div>
+              <div
+                id="rank2Value"
+                class="text-2xl font-extrabold text-gray-700 font-mono"
+              >
+                0
+              </div>
+              <div class="text-xs text-gray-500 mt-2 font-medium">
+                차석 효율
+              </div>
+            </div>
+          </div>
+
+          <!-- AD: RESULT MIDDLE BANNER (결과 상단과 테이블 사이) -->
+          <div class="w-full mb-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 h-24 flex items-center justify-center">
+              <ins class="adsbygoogle"
+                   style="display:block"
+                   data-ad-client="ca-pub-xxxxxxxxxxxxxxxx"
+                   data-ad-slot="YOUR_SLOT_ID_6"
+                   data-ad-format="auto"
+                   data-full-width-responsive="true"></ins>
+              <script>
+                (adsbygoogle = window.adsbygoogle || []).push({});
+              </script>
+            </div>
+          </div>
+
+          <!-- 전체 리스트 테이블 -->
+          <div
+            class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+          >
+            <div
+              class="bg-gray-100 px-4 py-3 border-b border-gray-200 flex justify-between items-center"
+            >
+              <span class="font-bold text-gray-600 text-sm"
+                >전체 분석 결과</span
+              >
+              <span class="text-xs text-gray-400">낮은 값일수록 높은 순위</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm text-left">
+                <tbody
+                  id="resultTableBody"
+                  class="divide-y divide-gray-100"
+                ></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- AD: RESULT BOTTOM BANNER -->
+          <div class="w-full mt-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 h-24 flex items-center justify-center">
+              <ins class="adsbygoogle"
+                   style="display:block"
+                   data-ad-client="ca-pub-xxxxxxxxxxxxxxxx"
+                   data-ad-slot="YOUR_SLOT_ID_7"
+                   data-ad-format="auto"
+                   data-full-width-responsive="true"></ins>
+              <script>
+                (adsbygoogle = window.adsbygoogle || []).push({});
+              </script>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- 우측 배너 광고 (PC에서만) -->
+    <aside class="hidden lg:block w-52">
+      <div class="sticky top-4 space-y-4">
+        <!-- AD: RIGHT TOP BANNER -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-200 p-2 h-64 flex items-center justify-center">
+          <ins class="adsbygoogle"
+               style="display:block"
+               data-ad-client="ca-pub-xxxxxxxxxxxxxxxx"
+               data-ad-slot="YOUR_SLOT_ID_8"
+               data-ad-format="auto"
+               data-full-width-responsive="true"></ins>
+          <script>
+            (adsbygoogle = window.adsbygoogle || []).push({});
+          </script>
+        </div>
+        <!-- AD: RIGHT MIDDLE BANNER -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-200 p-2 h-64 flex items-center justify-center">
+          <ins class="adsbygoogle"
+               style="display:block"
+               data-ad-client="ca-pub-xxxxxxxxxxxxxxxx"
+               data-ad-slot="YOUR_SLOT_ID_9"
+               data-ad-format="auto"
+               data-full-width-responsive="true"></ins>
+          <script>
+            (adsbygoogle = window.adsbygoogle || []).push({});
+          </script>
+        </div>
+        <!-- AD: RIGHT BOTTOM BANNER -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-200 p-2 h-64 flex items-center justify-center">
+          <ins class="adsbygoogle"
+               style="display:block"
+               data-ad-client="ca-pub-xxxxxxxxxxxxxxxx"
+               data-ad-slot="YOUR_SLOT_ID_10"
+               data-ad-format="auto"
+               data-full-width-responsive="true"></ins>
+          <script>
+            (adsbygoogle = window.adsbygoogle || []).push({});
+          </script>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- 모바일 전용 하단 고정 배너 -->
+  <div class="fixed bottom-0 inset-x-0 z-40 px-4 pb-4 lg:hidden">
+    <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-3 h-16 flex items-center justify-center">
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="ca-pub-xxxxxxxxxxxxxxxx"
+           data-ad-slot="YOUR_SLOT_ID_11"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+      <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
+    </div>
+  </div>
+
+  <!-- 로딩 오버레이 -->
+  <div
+    id="loadingOverlay"
+    class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50"
+  >
+    <div
+      class="bg-white rounded-2xl shadow-xl px-6 py-5 flex flex-col items-center gap-3"
+    >
+      <i class="fas fa-spinner fa-spin text-3xl text-green-600"></i>
+      <p class="text-sm font-semibold text-gray-700">
+        효율 계산 중입니다...
+      </p>
+      <p class="text-xs text-gray-500">
+        잠시만 기다려주세요.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // 1. WebApp API 엔드포인트 (이미 만들어둔 Apps Script URL)
+    const API_ENDPOINT =
+      "https://script.google.com/macros/s/AKfycbwvjel-TVIRRKcihPZzFxMKbb1Fib7hXMyGtWFhCS8S41ZM-_G0SPJBih4WGB7jdX8g/exec";
+
+    // 페이지 로드 시 괭이 강화 옵션 생성
+    window.addEventListener("load", () => {
+      const k1Select = document.getElementById("K1");
+      for (let i = 1; i <= 15; i++) {
+        const opt = document.createElement("option");
+        opt.value = i;
+        opt.textContent = `+${i} 강`;
+        k1Select.appendChild(opt);
+      }
+    });
+
+    function showLoading() {
+      const overlay = document.getElementById("loadingOverlay");
+      overlay.classList.remove("hidden");
+      overlay.classList.add("flex");
+
+      const btn = document.getElementById("calculateBtn");
+      const btnText = document.getElementById("calculateBtnText");
+      btn.disabled = true;
+      btn.classList.add("opacity-70", "cursor-not-allowed");
+      btnText.textContent = "계산 중...";
+    }
+
+    function hideLoading() {
+      const overlay = document.getElementById("loadingOverlay");
+      overlay.classList.add("hidden");
+      overlay.classList.remove("flex");
+
+      const btn = document.getElementById("calculateBtn");
+      const btnText = document.getElementById("calculateBtnText");
+      btn.disabled = false;
+      btn.classList.remove("opacity-70", "cursor-not-allowed");
+      btnText.textContent = "효율 계산 및 순위 확인";
+    }
+
+    async function calculate() {
+      // 1. 입력값 가져오기
+      const K1 = parseInt(document.getElementById("K1").value) || 1;
+      const H1 = parseInt(document.getElementById("H1").value) || 0;
+      const B21 = parseFloat(document.getElementById("B21").value) || 0;
+      const B22 = parseFloat(document.getElementById("B22").value) || 0;
+      const B24 = parseFloat(document.getElementById("B24").value) || 0;
+      const B25 = parseFloat(document.getElementById("B25").value) || 0;
+      const B26 = parseFloat(document.getElementById("B26").value) || 0;
+
+      // 2. 스테미너 유효성 검사
+      if (H1 < 3000) {
+        document
+          .getElementById("staminaError")
+          .classList.remove("hidden");
+        const h1Input = document.getElementById("H1");
+        h1Input.classList.add("ring-2", "ring-red-500", "border-red-500");
+        return;
+      } else {
+        document.getElementById("staminaError").classList.add("hidden");
+        const h1Input = document.getElementById("H1");
+        h1Input.classList.remove(
+          "ring-2",
+          "ring-red-500",
+          "border-red-500"
+        );
+      }
+
+      // 로딩 오버레이 표시
+      showLoading();
+
+      // 3. API 호출
+      const params = new URLSearchParams({
+        k1: K1,
+        h1: H1,
+        b21: B21,
+        b22: B22,
+        b24: B24,
+        b25: B25,
+        b26: B26,
+      });
+
+      let data;
+      try {
+        const res = await fetch(`${API_ENDPOINT}?${params.toString()}`, {
+          method: "GET",
+        });
+        if (!res.ok) {
+          throw new Error("API 응답 오류");
+        }
+        data = await res.json();
+        console.log("API response:", data);
+      } catch (err) {
+        hideLoading();
+        alert(
+          "결과를 불러오는 중 오류가 발생했습니다.\n나중에 다시 시도해주세요."
+        );
+        console.error(err);
+        return;
+      }
+
+      if (!data || data.error) {
+        hideLoading();
+        alert(
+          data && data.message
+            ? data.message
+            : "서버에서 에러가 발생했습니다."
+        );
+        console.error("Server error:", data);
+        return;
+      }
+
+      // 로딩 종료
+      hideLoading();
+
+      renderResult(data);
+    }
+
+    function renderResult(data) {
+      const items = Array.isArray(data.items) ? data.items : [];
+
+      if (!items.length) {
+        alert("분석 결과가 없습니다. 시트의 범위를 확인해주세요.");
+        return;
+      }
+
+      // 낮은 값이 1등 → 오름차순
+      items.sort((a, b) => (a.value || 0) - (b.value || 0));
+
+      // 결과 영역 표시
+      document
+        .getElementById("resultArea")
+        .classList.remove("hidden");
+
+      // 1등 & 2등
+      document.getElementById("rank1Label").innerText =
+        items[0].label ?? "-";
+      document.getElementById("rank1Value").innerText = formatNumber(
+        items[0].value
+      );
+
+      const second = items[1] || { label: "-", value: 0 };
+      document.getElementById("rank2Label").innerText =
+        second.label ?? "-";
+      document.getElementById("rank2Value").innerText = formatNumber(
+        second.value
+      );
+
+      // 전체 테이블 렌더링
+      const tbody = document.getElementById("resultTableBody");
+      tbody.innerHTML = "";
+
+      items.forEach((item, idx) => {
+        const rank = idx + 1;
+        let rankClass = "text-gray-500 font-bold";
+        let rowBg = "hover:bg-gray-50";
+
+        if (rank === 1) {
+          rankClass = "text-yellow-500";
+          rowBg = "bg-yellow-50/50 hover:bg-yellow-50";
+        } else if (rank === 2) {
+          rankClass = "text-gray-400";
+          rowBg = "bg-gray-50/50 hover:bg-gray-100";
+        }
+
+        const tr = document.createElement("tr");
+        tr.className = `${rowBg} transition-colors border-b border-gray-50 last:border-0`;
+
+        tr.innerHTML = `
+          <td class="py-3 px-4 w-12 text-center ${rankClass}">${rank}</td>
+          <td class="py-3 px-4 font-medium text-gray-700">${item.label ?? "-"}</td>
+          <td class="py-3 px-4 text-right font-mono text-gray-600">${formatNumber(
+            item.value
+          )}</td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+
+      // 스크롤 이동
+      document
+        .getElementById("resultArea")
+        .scrollIntoView({ behavior: "smooth" });
+    }
+
+    function formatNumber(num) {
+      if (num == null || isNaN(num)) return "-";
+      return Number(num).toLocaleString(undefined, {
+        maximumFractionDigits: 2,
+      });
+    }
+  </script>
+</body>
+</html>
